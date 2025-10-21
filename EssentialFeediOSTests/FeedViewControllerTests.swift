@@ -405,6 +405,10 @@ private extension FeedViewController {
         return refreshControl?.isRefreshing == true
     }
     
+    var feedImagesSection: Int {
+        return 0
+    }
+    
     func replaceUIRefreshControlWithFake() {
         let fake = FakeRefreshControl()
         
@@ -422,12 +426,12 @@ private extension FeedViewController {
     }
     
     func numberOfRenderedFeedImageViews() -> Int {
-        return tableView.numberOfRows(inSection: 0)
+        return tableView.numberOfRows(inSection: feedImagesSection)
     }
     
     func feedImageView(at row: Int) -> UITableViewCell? {
         let ds = tableView.dataSource
-        let indexPath = IndexPath(row: row, section: 0)
+        let indexPath = IndexPath(row: row, section: feedImagesSection)
         return ds?.tableView(tableView, cellForRowAt: indexPath)
     }
     
@@ -440,13 +444,13 @@ private extension FeedViewController {
         let view = simulateFeedImageViewVisible(at: index)
         
         let delegate = tableView.delegate
-        let indexPath = IndexPath(row: index, section: 0)
+        let indexPath = IndexPath(row: index, section: feedImagesSection)
         delegate?.tableView?(tableView, didEndDisplaying: view, forRowAt: indexPath)
     }
     
     func simulateFeedImageViewNearVisible(at index: Int) {
         let ds = tableView.prefetchDataSource
-        let indexPath = IndexPath(row: index, section: 0)
+        let indexPath = IndexPath(row: index, section: feedImagesSection)
         ds?.tableView(tableView, prefetchRowsAt: [indexPath])
     }
     
@@ -454,7 +458,7 @@ private extension FeedViewController {
         simulateFeedImageViewNearVisible(at: index)
 
         let ds = tableView.prefetchDataSource
-        let indexPath = IndexPath(row: index, section: 0)
+        let indexPath = IndexPath(row: index, section: feedImagesSection)
         ds?.tableView?(tableView, cancelPrefetchingForRowsAt: [indexPath])
     }
 }
