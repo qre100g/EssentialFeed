@@ -144,6 +144,30 @@ final class FeedViewControllerTests: XCTestCase {
         XCTAssertEqual(view1.isShowingImageLoadingIndicator, false, "Expected no loading indicator for the second view on image loading completion with failure")
     }
     
+    func test_FeedImageView_rendersImageLoadedFromURL() {
+        let (sut, loader) = makeSUT()
+        
+        sut.loadViewIfNeeded()
+        sut.beginAppearanceTransition(true, animated: false)
+        sut.endAppearanceTransition()
+        loader.completeFeedLoading(with: [makeImage(), makeImage()])
+        
+        let view0 = sut.simulateFeedImageViewVisible(at: 0)
+        let view1 = sut.simulateFeedImageViewVisible(at: 1)
+        XCTAssertEqual(view0.renderedImage, .none, "Expected no image for the first view while loading first image")
+        XCTAssertEqual(view1.renderedImage, .none, "Expected no image for the second view while loading second image")
+        
+        let imageData0 = UIImage.make(withColor: .red).pngData()!
+        loader.completeImageLoading(with: imageData0, at: 0)
+        XCTAssertEqual(view0.renderedImage, imageData0, "Expected image for the first view once first image loading completes successfully")
+        XCTAssertEqual(view1.renderedImage, .none, "Expected no image state change for the second view once first image loading complets successfully")
+        
+        let imageData1 = UIImage.make(withColor: .blue).pngData()!
+        loader.completeImageLoading(with: imageData1, at: 1)
+        XCTAssertEqual(view0.renderedImage, imageData0, "Expected no image state change for first view once second image loading completes successfully")
+        XCTAssertEqual(view1.renderedImage, imageData1, "Expected image for second view once second image loading completes successfully")
+    }
+    
     // MARK: - Helpers
     
     private func makeSUT(file: StaticString = #file, line: UInt = #line) -> (sut: FeedViewController, loader: LoaderSpy) {
@@ -338,6 +362,10 @@ private extension FeedImageCell {
     var isShowingImageLoadingIndicator: Bool {
         return feedImageContainer.isShimmering
     }
+    
+    var renderedImage: Data? {
+        return feedImageView.image?.pngData()
+    }
 }
 
 private extension UIRefreshControl {
@@ -346,6 +374,19 @@ private extension UIRefreshControl {
             actions(forTarget: target, forControlEvent: .valueChanged)?.forEach {
                 (target as NSObject).perform(Selector($0))
             }
+        }
+    }
+}
+
+private extension UIImage {
+    static func make(withColor color: UIColor) -> UIImage {
+        let rect = CGRect(x: 0, y: 0, width: 1, height: 1)
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1
+
+        return UIGraphicsImageRenderer(size: rect.size, format: format).image { rendererContext in
+            color.setFill()
+            rendererContext.fill(rect)
         }
     }
 }
