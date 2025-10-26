@@ -11,7 +11,7 @@ import EssentialFeediOS
 extension FeedViewController {
     
     var isShowingLoadingIndicator: Bool {
-        return refreshControl?.isRefreshing == true
+        return refreshController?.view.isRefreshing == true
     }
     
     var feedImagesSection: Int {
@@ -21,13 +21,13 @@ extension FeedViewController {
     func replaceUIRefreshControlWithFake() {
         let fake = FakeRefreshControl()
         
-        refreshControl?.allTargets.forEach { target in
-            refreshControl?.actions(forTarget: target, forControlEvent: .valueChanged)?.forEach { action in
+        refreshController?.view.allTargets.forEach { target in
+            refreshController?.view.actions(forTarget: target, forControlEvent: .valueChanged)?.forEach { action in
                 fake.addTarget(target, action: Selector(action), for: .valueChanged)
             }
         }
         
-        refreshControl = fake
+        refreshController?.view = fake
     }
     
     func simulateUserInitiatedFeedReload() {
