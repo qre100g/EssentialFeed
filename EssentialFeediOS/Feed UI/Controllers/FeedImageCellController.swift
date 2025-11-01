@@ -6,52 +6,53 @@
 //
 
 import UIKit
-import EssentialFeed
 
 final class FeedImageCellController {
     
-    private let model: FeedImage
-    private let imageLoader: FeedImageDataLoader
+    private let viewModel: FeedImageViewModel
     
-    private var task: FeedImageDataLoaderTask?
-    
-    init(model: FeedImage, imageLoader: FeedImageDataLoader) {
-        self.model = model
-        self.imageLoader = imageLoader
+    init(viewModel: FeedImageViewModel) {
+        self.viewModel = viewModel
     }
     
     func view() -> UITableViewCell {
-        let cell = FeedImageCell()
-        cell.locationContainer.isHidden = (model.location == nil)
-        cell.locationLabel.text = model.location
-        cell.descriptionLabel.text = model.description
-        cell.feedImageView.image = nil
-        cell.feedImageRetryButton.isHidden = true
-        cell.feedImageContainer.startShimmering()
-        
-        let loadImage = { [weak self, weak cell] in
-            guard let self, let cell else { return }
-            task = self.imageLoader.loadImageData(from: model.imageURL) { [weak cell] result in
-                let data = try? result.get()
-                let image = data.map(UIImage.init) ?? nil
-                cell?.feedImageView.image = image
-                cell?.feedImageRetryButton.isHidden = (image != nil)
-                cell?.feedImageContainer.stopShimmering()
-            }
-        }
-        
-        cell.onRetry = loadImage
-        loadImage()
+        let cell = binded(FeedImageCell())
+        viewModel.loadImage()
 
         return cell
     }
     
+    private func binded(_ cell: FeedImageCell) -> FeedImageCell {
+        cell.locationContainer.isHidden = !viewModel.hasLocation
+        cell.locationLabel.text = viewModel.location
+        cell.descriptionLabel.text = viewModel.description
+        cell.onRetry = viewModel.loadImage
+        
+        viewModel.onImageLoad = { [weak cell] image in
+            cell?.feedImageView.image = image
+        }
+        
+        viewModel.onImageLoadStateChange = { [weak cell] isLoading in
+            if isLoading {
+                cell?.feedImageContainer.startShimmering()
+            } else {
+                cell?.feedImageContainer.stopShimmering()
+            }
+        }
+        
+        viewModel.onShouldRetryImageLoadStateChange = { [weak cell] shouldRetry in
+            cell?.feedImageRetryButton.isHidden = !shouldRetry
+        }
+        
+        return cell
+    }
+    
     func preload() {
-        task = imageLoader.loadImageData(from: model.imageURL, completion: { _ in })
+        viewModel.loadImage()
     }
     
     func cancelLoad() {
-        task?.cancel()
+        viewModel.cancelImageDataLoad()
     }
     
 }
